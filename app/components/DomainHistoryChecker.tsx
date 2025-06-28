@@ -18,9 +18,8 @@ import {
   Info,
 } from "lucide-react";
 
-// Corrected import path for the shared type
-import type { WhoisResult } from "@/app/actions/whois";
-
+// Corrected import path for the shared type and updated to WhoisJsonResult
+import type { WhoisJsonResult } from "whois-json"; // Correctly import from the module
 // --- START: Type for vCard array items ---
 // A common structure for a vCard property is [property_name, {parameters}, property_type, value]
 // We are primarily interested in the value, which is usually at index 3.
@@ -82,7 +81,7 @@ const DomainHistoryChecker: React.FC = () => {
   const [domain, setDomain] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const [whoisData, setWhoisData] = useState<WhoisResult | null>(null);
+  const [whoisData, setWhoisData] = useState<WhoisJsonResult | null>(null); // Changed to WhoisJsonResult
   const [rdapData, setRdapData] = useState<RdapData | null>(null);
   const [activeTab, setActiveTab] = useState<
     "structured-whois" | "structured-rdap" | "raw"
@@ -236,7 +235,8 @@ const DomainHistoryChecker: React.FC = () => {
   };
 
   // WHOIS Structured Display Component
-  const WhoisStructuredDisplay: React.FC<{ data: WhoisResult }> = ({
+  const WhoisStructuredDisplay: React.FC<{ data: WhoisJsonResult }> = ({
+    // Changed to WhoisJsonResult
     data,
   }) => {
     if (!data || Object.keys(data).length === 0) {
@@ -277,7 +277,7 @@ const DomainHistoryChecker: React.FC = () => {
     const domainStatus = Array.isArray(data.domainStatus)
       ? data.domainStatus
       : typeof data.domainStatus === "string"
-      ? data.domainStatus.split(" ").filter(Boolean)
+      ? (data.domainStatus as string).split(" ").filter(Boolean) // Add type assertion here
       : typeof data.status === "string"
       ? data.status.split(" ").filter(Boolean)
       : Array.isArray(data.status)
@@ -819,7 +819,7 @@ const DomainHistoryChecker: React.FC = () => {
 
   // Raw Data Display Component
   const RawDataDisplay: React.FC<{
-    whois: WhoisResult | null;
+    whois: WhoisJsonResult | null; // Changed to WhoisJsonResult
     rdap: RdapData | null;
   }> = ({ whois, rdap }) => (
     <div className="p-6 space-y-8">
@@ -904,55 +904,77 @@ const DomainHistoryChecker: React.FC = () => {
 
         {!loading && (whoisData || rdapData) && (
           <div className="max-w-6xl mx-auto mt-10">
-            <div className="bg-white rounded-t-2xl shadow-md">
-              <div className="flex border-b border-gray-200 justify-center">
-                {[
-                  { id: "structured-whois", label: "Structured WHOIS" },
-                  { id: "structured-rdap", label: "Structured RDAP" },
-                  { id: "raw", label: "Raw Data" },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() =>
-                      setActiveTab(
-                        tab.id as "structured-whois" | "structured-rdap" | "raw"
-                      )
-                    }
-                    className={`px-5 sm:px-8 py-3.5 text-sm sm:text-base font-medium transition-all border-b-2 ${
-                      activeTab === tab.id
-                        ? "text-blue-600 border-blue-600"
-                        : "text-gray-500 hover:text-blue-500 border-transparent"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+            <div className="flex justify-center mb-6 space-x-4">
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-semibold transition-all ${
+                  activeTab === "structured-whois"
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "bg-white text-gray-700 hover:bg-blue-50 border border-gray-300"
+                }`}
+                onClick={() => setActiveTab("structured-whois")}
+                disabled={!whoisData}
+              >
+                WHOIS Data
+              </button>
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-semibold transition-all ${
+                  activeTab === "structured-rdap"
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "bg-white text-gray-700 hover:bg-blue-50 border border-gray-300"
+                }`}
+                onClick={() => setActiveTab("structured-rdap")}
+                disabled={!rdapData}
+              >
+                RDAP Data
+              </button>
+              <button
+                className={`px-6 py-3 rounded-full text-lg font-semibold transition-all ${
+                  activeTab === "raw"
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "bg-white text-gray-700 hover:bg-blue-50 border border-gray-300"
+                }`}
+                onClick={() => setActiveTab("raw")}
+                disabled={!whoisData && !rdapData}
+              >
+                Raw Data
+              </button>
             </div>
 
-            <div className="bg-white rounded-b-2xl shadow-md p-6">
-              {activeTab === "structured-whois" &&
-                (whoisData ? (
-                  <WhoisStructuredDisplay data={whoisData} />
-                ) : (
-                  <div className="text-center text-gray-500">
-                    No WHOIS data found.
-                  </div>
-                ))}
+            <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-xl">
+              {activeTab === "structured-whois" && whoisData && (
+                <WhoisStructuredDisplay data={whoisData} />
+              )}
+              {activeTab === "structured-whois" && !whoisData && (
+                <div className="p-6 text-center text-gray-500">
+                  No WHOIS data available for this domain.
+                </div>
+              )}
 
-              {activeTab === "structured-rdap" &&
-                (rdapData ? (
-                  <RdapStructuredDisplay data={rdapData} />
-                ) : (
-                  <div className="text-center text-gray-500">
-                    No RDAP data found.
-                  </div>
-                ))}
+              {activeTab === "structured-rdap" && rdapData && (
+                <RdapStructuredDisplay data={rdapData} />
+              )}
+              {activeTab === "structured-rdap" && !rdapData && (
+                <div className="p-6 text-center text-gray-500">
+                  No RDAP data available for this domain.
+                </div>
+              )}
 
-              {activeTab === "raw" && (
+              {activeTab === "raw" && (whoisData || rdapData) && (
                 <RawDataDisplay whois={whoisData} rdap={rdapData} />
               )}
+              {activeTab === "raw" && !whoisData && !rdapData && (
+                <div className="p-6 text-center text-gray-500">
+                  No raw data available for this domain.
+                </div>
+              )}
             </div>
+          </div>
+        )}
+
+        {!loading && !whoisData && !rdapData && !error && (
+          <div className="max-w-2xl mx-auto mt-10 p-8 bg-white/80 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-xl text-center text-gray-600">
+            <Info size={48} className="mx-auto text-blue-400 mb-4" />
+            <p className="text-lg">Enter a domain name above to get started!</p>
           </div>
         )}
       </div>
