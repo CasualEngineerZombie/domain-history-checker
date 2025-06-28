@@ -862,7 +862,7 @@ const DomainHistoryChecker: React.FC = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-10">
           <h1 className="text-5xl font-extrabold text-gray-900 tracking-tight">
-            Domain History Checker
+            WHOIS/RDAP Explorer 
           </h1>
           <p className="mt-3 text-xl text-gray-600">
             Instantly look up domain info via WHOIS & RDAP.

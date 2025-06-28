@@ -1,22 +1,21 @@
- # Domain History Checker
+# WHOIS/RDAP Explorer
 
-This is a simple Next.js application that allows users to look up domain registration details using WHOIS and RDAP protocols. It features a clean, intuitive UI and includes server-side API route rate limiting to prevent abuse.
- 
+This is a Next.js application that enables users to explore domain registration details using WHOIS and RDAP protocols. It features a clean, intuitive UI and includes server-side API route rate limiting to prevent abuse.
 
 ## Setup & Installation
 
-Follow these steps to get the project up and running on your local machine.
+Follow these steps to set up and run the project on your local machine.
 
-### 1. Clone the repository (or create a new Next.js project)
-If you created a new Next.js project based on the previous instructions, you can skip this. Otherwise:
+### 1. Clone the Repository (or Create a New Next.js Project)
+If you created a new Next.js project based on prior instructions, you can skip this step. Otherwise:
 
 ```bash
-git clone https://github.com/CasualEngineerZombie/domain-history-checker
-cd domain-history-checker
+git clone https://github.com/CasualEngineerZombie/whois-rdap-explorer
+cd whois-rdap-explorer
 ```
 
 ### 2. Install Dependencies
-Install all the necessary npm packages:
+Install all required npm packages:
 
 ```bash
 npm install
@@ -27,13 +26,12 @@ yarn install
 ### 3. Set Up Vercel KV (for Rate Limiting)
 This application uses Vercel KV for persistent and scalable rate limiting.
 
-- **Create a Vercel Account**: If you don't have one, sign up at [vercel.com](https://vercel.com).
+- **Create a Vercel Account**: Sign up at [vercel.com](https://vercel.com) if you don't have an account.
 - **Create a KV Database**:
-  - Go to your Vercel Dashboard.
-  - Navigate to the "Storage" tab.
-  - Click "Connect Store" and choose "KV". Follow the prompts to create a new KV database and link it to your Next.js project.
-- **Get Environment Variables**: After creation, Vercel will provide you with connection details (URL and Token).
-- **Create .env.local**: In the root of your project, create a file named `.env.local` and add the following environment variables (replace `<your_values>` with the actual values from Vercel KV):
+  - Navigate to the "Storage" tab in your Vercel Dashboard.
+  - Click "Connect Store" and select "KV". Follow the prompts to create a new KV database and link it to your Next.js project.
+- **Get Environment Variables**: Vercel will provide connection details (URL and Token) after creation.
+- **Create .env.local**: In the project root, create a `.env.local` file and add the following environment variables (replace `<your_values>` with the actual values from Vercel KV):
 
 ```bash
 KV_URL="<your_kv_url>"
@@ -41,29 +39,29 @@ KV_REST_API_TOKEN="<your_kv_token>"
 KV_REST_API_URL="<your_kv_rest_api_url>"
 ```
 
-**Important**: For local development, these variables need to be present. If you omit them or provide invalid ones, the rate limiter will fail to initialize.
+**Important**: These variables are required for local development. Invalid or missing variables will cause the rate limiter to fail.
 
 ### 4. Project Structure (Verify)
-Ensure your project structure generally matches the following for the components to resolve correctly:
+Ensure your project structure aligns with the following to ensure components resolve correctly:
 
 ```
-domain-history-checker/
+whois-rdap-explorer/
 ├── src/
 │   ├── app/
 │   │   ├── actions/
-│   │   │   └── whois.ts
+│   │   │   └── whois-rdap.ts
 │   │   ├── api/
-│   │   │   └── whois/
+│   │   │   └── whois-rdap/
 │   │   │       └── route.ts
 │   │   ├── components/
-│   │   │   └── DomainHistoryChecker.tsx
+│   │   │   └── WHOISRDAPExplorer.tsx
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx
 │   ├── lib/
 │   │   └── ratelimit.ts
 │   └── types/
-│       └── whois-json.d.ts
+│       └── whois-rdap.d.ts
 ├── .env.local
 ├── next.config.mjs
 ├── package.json
@@ -72,7 +70,7 @@ domain-history-checker/
 ```
 
 ## Running the Application
-Once the setup is complete, you can run the application in development mode:
+After completing the setup, run the application in development mode:
 
 ```bash
 npm run dev
@@ -80,21 +78,21 @@ npm run dev
 yarn dev
 ```
 
-The application will be accessible at `http://localhost:3000`.
+The application will be available at `http://localhost:3000`.
 
 ## Testing Rate Limiting
 To test the API route rate limiting (configured in `lib/ratelimit.ts` for 5 requests per 10 seconds per IP):
 
-1. Ensure the dev server is running.
-2. Open your terminal or a tool like Postman/Insomnia.
-3. Send POST requests rapidly to `http://localhost:3000/api/whois` with a JSON body like `{"domain": "example.com"}`.
+1. Ensure the development server is running.
+2. Use a terminal or a tool like Postman/Insomnia.
+3. Send POST requests rapidly to `http://localhost:3000/api/whois-rdap` with a JSON body like `{"domain": "example.com"}`.
 
    ```bash
-   curl -X POST -H "Content-Type: application/json" -d '{"domain": "example.com"}' http://localhost:3000/api/whois
+   curl -X POST -H "Content-Type: application/json" -d '{"domain": "example.com"}' http://localhost:3000/api/whois-rdap
    ```
 
 4. Observe the responses:
-   - The first 5 requests within a 10-second window should return `200 OK` (with WHOIS data).
-   - The 6th request (and subsequent ones within that window) should return `429 Too Many Requests` with an error message indicating the rate limit.
+   - The first 5 requests within a 10-second window should return `200 OK` with WHOIS/RDAP data.
+   - The 6th request (and subsequent ones within the window) should return `429 Too Many Requests` with an error message indicating the rate limit.
    - The `429` response headers will include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` (Unix timestamp).
-5. Wait for the reset: After a `429` response, wait for the `Retry-After` duration (or simply more than 10 seconds from your first request). Subsequent requests should then succeed again.
+5. Wait for the reset: After a `429` response, wait for the `Retry-After` duration (or more than 10 seconds from the first request). Subsequent requests should succeed again.
